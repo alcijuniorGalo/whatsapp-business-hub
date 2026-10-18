@@ -88,28 +88,18 @@ jobs:
       - name: Build do APK (release assinado se houver keystore, senão debug)
         run: |
           if [ -f android/app/release.keystore ]; then
-            flutter build apk --release --shrink --verbose
+            flutter build apk --release --shrink
           else
-            flutter build apk --debug --verbose
+            flutter build apk --debug
           fi
-
-      - name: Diagnóstico de saídas (sempre executa)
-        if: always()
-        run: |
-          echo "=== APKs em android/app/build/outputs ==="
-          find android/app/build/outputs -name "*.apk" 2>/dev/null || true
-          echo "=== APKs em build/app/outputs ==="
-          find build/app/outputs -name "*.apk" 2>/dev/null || true
-          echo "=== output-metadata.json ==="
-          find android/app/build/outputs -name "output-metadata.json" 2>/dev/null | head -3 || true
-          echo "=== listing redirect ==="
-          find android/app/build -name "*listing*" 2>/dev/null | head -5 || true
 
       - name: Upload APK (artefato)
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: build/app/outputs/flutter-apk/*.apk
+          path: |
+            android/app/build/outputs/flutter-apk/*.apk
+            build/app/outputs/flutter-apk/*.apk
 
   # ---------- Release automática no GitHub ----------
   github-release:
