@@ -1,0 +1,13 @@
+# Exemplo — NÃO commite o arquivo real `key.properties`.
+# Copie para `android/key.properties` e preencha após gerar o keystore:
+#
+#   keytool -genkey -v -keystore ~/whatsapp_hub.keystore -alias hub-alias \
+#     -keyalg RSA -keysize 2048 -validity 10000
+#
+# Guarde o keystore e a senha em local seguro: sem eles você NUNCA mais
+# consegue publicar atualizações do app.
+
+storePassword=TROQUE_PELA_SENHA_DO_KEYSTORE
+keyPassword=TROQUE_PELA_SENHA_DA_CHAVE
+keyAlias=hub-alias
+storeFile=/home/seu-usuario/whatsapp_hub.keystore
