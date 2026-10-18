@@ -6,6 +6,7 @@ import '../core/models/conversation.dart';
 import '../core/models/automation_rule.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
+import '../services/resilient_api_service.dart';
 import '../services/cache_service.dart';
 import '../services/audit_service.dart';
 
