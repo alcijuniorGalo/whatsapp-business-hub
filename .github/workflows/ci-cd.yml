@@ -88,9 +88,9 @@ jobs:
       - name: Build do APK (release assinado se houver keystore, senão debug)
         run: |
           if [ -f android/app/release.keystore ]; then
-            flutter build apk --release --shrink
+            flutter build apk --release --shrink --verbose
           else
-            flutter build apk --debug
+            flutter build apk --debug --verbose
           fi
 
       - name: Upload APK (artefato)
