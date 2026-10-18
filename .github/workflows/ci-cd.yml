@@ -1,0 +1,129 @@
+name: CI/CD — One-Click
+
+on:
+  push:
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  # ---------- Servidor: instala + testa ----------
+  server:
+    name: Servidor (Node)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: server/package.json
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+
+  # ---------- App: analyze + testes ----------
+  app-test:
+    name: App (analyze + testes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test --coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/lcov.info
+
+  # ---------- Build do APK assinado ----------
+  build-apk:
+    name: Build APK assinado
+    needs: [server, app-test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java (Android)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Setup Android SDK
+        uses: actions/setup-android@v1
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Restaura o keystore (se os Secrets existirem)
+        if: secrets.KEYSTORE_BASE64 != ''
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+          cat > android/key.properties <<EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=release.keystore
+          EOF
+
+      - run: flutter pub get
+
+      - name: Build do APK (release assinado se houver keystore, senão debug)
+        run: |
+          if [ -f android/app/release.keystore ]; then
+            flutter build apk --release --shrink
+          else
+            flutter build apk --debug
+          fi
+
+      - name: Upload APK (artefato)
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/*.apk
+
+  # ---------- Release automática no GitHub ----------
+  github-release:
+    name: GitHub Release
+    needs: build-apk
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Baixa o APK
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release
+          path: dist-apk
+
+      - name: Changelog a partir dos commits
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            git log --pretty=format:'- %s' > CHANGELOG_RELEASE.md
+          else
+            git log "$LAST_TAG"..HEAD --pretty=format:'- %s' > CHANGELOG_RELEASE.md
+          fi
+          [ -s CHANGELOG_RELEASE.md ] || echo "- Release inicial" > CHANGELOG_RELEASE.md
+
+      - name: Anexa APK + changelog à release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist-apk/app-release.apk
+          body_path: CHANGELOG_RELEASE.md
