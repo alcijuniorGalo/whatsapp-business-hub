@@ -63,19 +63,23 @@ jobs:
           channel: stable
 
       - name: Restaura o keystore (se os Secrets existirem)
-        if: secrets.KEYSTORE_BASE64 != ''
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
-          cat > android/key.properties <<EOF
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 -d > android/app/release.keystore
+            cat > android/key.properties <<EOF
           storePassword=$KEYSTORE_PASSWORD
           keyPassword=$KEYSTORE_PASSWORD
           keyAlias=$KEY_ALIAS
           storeFile=release.keystore
           EOF
+            echo "Keystore restaurado: build sera release assinado."
+          else
+            echo "Sem keystore configurado: build sera debug."
+          fi
 
       - run: flutter pub get
 
