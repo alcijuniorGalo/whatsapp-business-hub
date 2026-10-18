@@ -54,6 +54,11 @@ class InboxScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Inbox unificado')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _novaConversa(context, ref),
+        icon: const Icon(Icons.chat),
+        label: const Text('Nova conversa'),
+      ),
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -140,6 +145,74 @@ class InboxScreen extends ConsumerWidget {
         InboxFilter.awaitingClient => 'Aguardando cliente',
         InboxFilter.resolved => 'Resolvidas',
       };
+}
+
+/// Abre o diálogo de nova conversa e navega para a tela de conversa.
+void _novaConversa(BuildContext context, WidgetRef ref) {
+  final numbers = ref.read(phoneNumbersProvider);
+  if (numbers.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Cadastre um número primeiro.')),
+    );
+    return;
+  }
+  final ctrl = TextEditingController();
+  showDialog(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: const Text('Nova conversa'),
+      content: TextField(
+        controller: ctrl,
+        keyboardType: TextInputType.phone,
+        decoration: const InputDecoration(
+          labelText: 'Número do contato (+55...)',
+          border: OutlineInputBorder(),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final digits = ctrl.text.replaceAll(RegExp(r'\D'), '');
+            if (digits.length < 10) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Número inválido.')),
+              );
+              return;
+            }
+            Navigator.pop(ctx);
+            final now = DateTime.now();
+            final convo = Conversation(
+              phoneNumberId: numbers.first.id,
+              chatId: digits,
+              contactName: ctrl.text.trim(),
+              lastMessage: ChatMessage(
+                id: 'local-${now.millisecondsSinceEpoch}',
+                phoneNumberId: numbers.first.id,
+                chatId: digits,
+                contactName: ctrl.text.trim(),
+                direction: MessageDirection.outbound,
+                type: 'text',
+                body: '',
+                timestamp: now,
+                status: 'draft',
+              ),
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ConversationScreen(conversation: convo),
+              ),
+            );
+          },
+          child: const Text('Abrir'),
+        ),
+      ],
+    ),
+  );
 }
 
 class _NumberChip extends StatelessWidget {
