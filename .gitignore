@@ -1,0 +1,41 @@
+# ============ Flutter / Dart ============
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+.pub-cache/
+.pub/
+coverage/
+
+# ============ Android ============
+android/app/release.keystore
+android/app/*.keystore
+android/key.properties
+**/local.properties
+android/.gradle/
+
+# ============ Node.js (server) ============
+server/node_modules/
+server/events.jsonl
+server/.env
+
+# ============ Segredos (nunca commite) ============
+.env
+*.keystore
+*.jks
+*.p8
+sa.json
+**/sa.json
+**/google-services.json
+
+# ============ IDE / SO ============
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# ============ Dist (gerado pelo CI) ============
+dist/*.apk
+!dist/LEIA-ME.txt
