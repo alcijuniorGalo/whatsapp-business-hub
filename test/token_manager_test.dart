@@ -16,8 +16,10 @@ void main() {
   test('token válido longe da expiração -> ok', () async {
     final auth = MockAuth();
     when(() => auth.readToken()).thenAnswer((_) async => 'tok');
+    // +12h de margem: evita flake de truncamento no inDays entre o stub e a
+    // chamada (30 dias menos alguns ms = 29 dias e 23:59:59 -> inDays 29).
     when(() => auth.expiryDate()).thenAnswer(
-        (_) async => DateTime.now().add(const Duration(days: 30)));
+        (_) async => DateTime.now().add(const Duration(days: 30, hours: 12)));
     final tm = TokenManager(auth);
     expect(await tm.check(), TokenHealth.ok);
     expect(await tm.daysRemaining(), 30);
