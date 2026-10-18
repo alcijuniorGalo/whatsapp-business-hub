@@ -1,0 +1,25 @@
+services:
+  webhook:
+    build: .
+    container_name: bhub-webhook
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      VERIFY_TOKEN: ${VERIFY_TOKEN:?defina no .env}
+      WA_TOKEN: ${WA_TOKEN:?defina no .env}
+      GRAPH_VERSION: ${GRAPH_VERSION:-v21.0}
+      FIREBASE_SA: /run/secrets/firebase_sa
+      PORT: 3000
+    secrets:
+      - firebase_sa
+    volumes:
+      - webhook-data:/app/data
+    # Em produção, exponha via reverse proxy com TLS (Caddy/Traefik).
+
+secrets:
+  firebase_sa:
+    file: ./sa.json
+
+volumes:
+  webhook-data:
