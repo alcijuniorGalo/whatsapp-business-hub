@@ -34,9 +34,9 @@ Future<void> _firebaseBgHandler(RemoteMessage msg) async {
       'status': 'received',
     });
     await NotificationService.notifyMessage(
-      phoneNumberId: data['phoneNumberId'] ?? '',
-      channelLabel: data['phoneNumberId'] ?? '',
-      contactName: data['contactName'] ?? data['chatId'] ?? '',
+      phoneNumberId: (data['phoneNumberId'] ?? '').toString(),
+      channelLabel: (data['phoneNumberId'] ?? '').toString(),
+      contactName: (data['contactName'] ?? data['chatId'] ?? '').toString(),
       body: (data['body'] ?? '').toString(),
       id: DateTime.now().millisecondsSinceEpoch ~/ 1000,
     );
