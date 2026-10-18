@@ -88,18 +88,26 @@ jobs:
       - name: Build do APK (release assinado se houver keystore, senão debug)
         run: |
           if [ -f android/app/release.keystore ]; then
-            flutter build apk --release --shrink
+            flutter build apk --release --shrink || true
           else
-            flutter build apk --debug
+            flutter build apk --debug || true
+          fi
+          # O flutter tool nem sempre localiza o APK gerado pelo Gradle;
+          # coleta manual do local real para o local canônico:
+          mkdir -p build/app/outputs/flutter-apk
+          find android/app/build/outputs -name "*.apk" -exec cp -v {} build/app/outputs/flutter-apk/ \; || true
+          APK_COUNT=$(find build/app/outputs/flutter-apk -name "*.apk" | wc -l)
+          echo "APKs coletados: $APK_COUNT"
+          if [ "$APK_COUNT" -eq 0 ]; then
+            echo "::error::Nenhum APK foi gerado pelo build."
+            exit 1
           fi
 
       - name: Upload APK (artefato)
         uses: actions/upload-artifact@v4
         with:
           name: app-release
-          path: |
-            android/app/build/outputs/flutter-apk/*.apk
-            build/app/outputs/flutter-apk/*.apk
+          path: build/app/outputs/flutter-apk/*.apk
 
   # ---------- Release automática no GitHub ----------
   github-release:
