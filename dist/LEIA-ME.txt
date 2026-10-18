@@ -1,0 +1,15 @@
+Pasta de entrega — WhatsApp Business Hub v1.0
+
+O arquivo WhatsAppBusinessHub_v1.0.apk será colocado aqui pelo pipeline de CI
+(push na branch main do GitHub -> Actions -> artefato "app-release").
+
+Como gerar o APK (escolha UMA):
+  A) Automático (recomendado): conecte o repositório ao GitHub, configure os
+     secrets (KEYSTORE_B64, KEYSTORE_PASSWORD, KEY_PASSWORD, KEY_ALIAS) e
+     faça push na main. Baixe o APK em Actions > CI > app-release.
+  B) Local: com Flutter SDK instalado,
+     flutter build apk --release --shrink
+     -> build/app/outputs/flutter-apk/app-release.apk
+
+Pré-requisitos que este ambiente NÃO possui (e por isso o APK não foi gerado
+aqui): Flutter SDK, Android SDK, keytool, Docker.
